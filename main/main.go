@@ -8,13 +8,18 @@ import (
 	"strings"
 )
 
+// Open a new terminal
+// Access the project package
+//      cd league-coding-challenge/
+// Access the main package
+//      cd main
 // Run with
 //		go run .
 // Send request with:
 //		curl -F 'file=@files/matrix.csv' "localhost:8080/echo"
 
 func main() {
-	http.HandleFunc("/echo", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		file, _, err := r.FormFile("file")
 		if err != nil {
 			w.Write([]byte(fmt.Sprintf("error to read file: %s", err.Error())))
@@ -33,7 +38,10 @@ func main() {
 			return
 		}
 
+		fmt.Fprintln(w, "Input")
 		matrixOutput(w, records)
+
+		fmt.Fprintln(w, "Output")
 
 		fmt.Fprintln(w)
 		fmt.Fprintln(w, "Invert Matrix")
@@ -54,6 +62,7 @@ func main() {
 	http.ListenAndServe(":8080", nil)
 }
 
+// validateMatrix checks whether the CSV matrix is a valid NxN square matrix
 func validateMatrix(records [][]string) error {
 	rows := len(records)
 	if rows == 0 {
@@ -63,49 +72,24 @@ func validateMatrix(records [][]string) error {
 	cols := len(records[0])
 	for _, row := range records {
 		if len(row) != cols {
-			return fmt.Errorf("Invalid matrix: inconsistent number of columns")
+			return fmt.Errorf("invalid matrix: inconsistent number of columns")
 		}
 		for _, cell := range row {
 			if _, err := strconv.Atoi(cell); err != nil {
-				return fmt.Errorf("Invalid matrix: all values must be integers")
+				return fmt.Errorf("invalid matrix: all values must be integers")
 			}
 		}
 	}
 
+	// Ensure it's a square matrix
 	if rows != cols {
-		return fmt.Errorf("Invalid matrix: must be a square matrix (NxN)")
+		return fmt.Errorf("invalid matrix: must be a square matrix (NxN)")
 	}
 
 	return nil
 }
 
-func multiply(w http.ResponseWriter, numbers []string) {
-	multiply := 1
-	for i := 0; i < len(numbers); i++ {
-		convertedNumbers, _ := strconv.Atoi(numbers[i])
-		multiply *= convertedNumbers
-	}
-	fmt.Fprintln(w, multiply)
-}
-
-func sum(w http.ResponseWriter, numbers []string) {
-	sum := 0
-	for i := 0; i < len(numbers); i++ {
-		convertNumbers, _ := strconv.Atoi(numbers[i])
-		sum += convertNumbers
-	}
-	fmt.Fprintln(w, sum)
-}
-
-func flatten(w http.ResponseWriter, records [][]string) []string {
-	var list []string
-	for _, row := range records {
-		list = append(list, row...)
-	}
-	fmt.Fprintln(w, strings.Join(list, ","))
-	return list
-}
-
+// Transpose: Return the matrix as a string in matrix format where the columns and
 func transpose(w http.ResponseWriter, records [][]string) {
 	rows := len(records)
 	cols := len(records[0])
@@ -122,6 +106,36 @@ func transpose(w http.ResponseWriter, records [][]string) {
 	}
 
 	matrixOutput(w, transposed)
+}
+
+// Flatten: Return the matrix as a 1 line string, with values separated by commas.
+func flatten(w http.ResponseWriter, records [][]string) []string {
+	var list []string
+	for _, row := range records {
+		list = append(list, row...)
+	}
+	fmt.Fprintln(w, strings.Join(list, ","))
+	return list
+}
+
+// Sum: Return the sum of the integers in the matrix
+func sum(w http.ResponseWriter, numbers []string) {
+	sum := 0
+	for i := 0; i < len(numbers); i++ {
+		convertNumbers, _ := strconv.Atoi(numbers[i])
+		sum += convertNumbers
+	}
+	fmt.Fprintln(w, sum)
+}
+
+// Multiply: Return the product of the integers in the matrix
+func multiply(w http.ResponseWriter, numbers []string) {
+	multiply := 1
+	for i := 0; i < len(numbers); i++ {
+		convertedNumbers, _ := strconv.Atoi(numbers[i])
+		multiply *= convertedNumbers
+	}
+	fmt.Fprintln(w, multiply)
 }
 
 func matrixOutput(w http.ResponseWriter, records [][]string) {

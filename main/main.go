@@ -4,7 +4,6 @@ import (
 	"encoding/csv"
 	"fmt"
 	"net/http"
-	"strconv"
 	"strings"
 )
 
@@ -17,131 +16,92 @@ import (
 //		go run .
 // Send request with:
 //		curl -F 'file=@files/matrix.csv' "localhost:8080/echo"
+//		curl -F 'file=@files/matrix.csv' "localhost:8080/invert"
+//		curl -F 'file=@files/matrix.csv' "localhost:8080/flatten"
+//		curl -F 'file=@files/matrix.csv' "localhost:8080/sum"
+//		curl -F 'file=@files/matrix.csv' "localhost:8080/multiply"
 
 func main() {
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		file, _, err := r.FormFile("file")
-		if err != nil {
-			w.Write([]byte(fmt.Sprintf("error to read file: %s", err.Error())))
-			return
-		}
-		defer file.Close()
-		records, err := csv.NewReader(file).ReadAll()
-		if err != nil {
-			w.Write([]byte(fmt.Sprintf("error to parse file: %s", err.Error())))
-			return
-		}
+	http.HandleFunc("/", handleEcho)
+	http.HandleFunc("/invert", handleInvert)
+	http.HandleFunc("/flatten", handleFlatten)
+	http.HandleFunc("/sum", handleSum)
+	http.HandleFunc("/multiply", handleMultiply)
 
-		// Validate matrix
-		if err := validateMatrix(records); err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-
-		fmt.Fprintln(w, "Input")
-		matrixOutput(w, records)
-
-		fmt.Fprintln(w, "Output")
-
-		fmt.Fprintln(w)
-		fmt.Fprintln(w, "Invert Matrix")
-		transpose(w, records)
-
-		fmt.Fprintln(w)
-		fmt.Fprintln(w, "Flatten")
-		numbers := flatten(w, records)
-
-		fmt.Fprintln(w)
-		fmt.Fprintln(w, "Sum")
-		sum(w, numbers)
-
-		fmt.Fprintln(w)
-		fmt.Fprintln(w, "Multiply")
-		multiply(w, numbers)
-	})
 	http.ListenAndServe(":8080", nil)
 }
 
-// validateMatrix checks whether the CSV matrix is a valid NxN square matrix
-func validateMatrix(records [][]string) error {
-	rows := len(records)
-	if rows == 0 {
-		return fmt.Errorf("CSV file is empty")
+// 1. Echo (given) - Return the matrix as a string in matrix format.
+func handleEcho(w http.ResponseWriter, r *http.Request) {
+	records, err := parseCSV(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
 
-	cols := len(records[0])
-	for _, row := range records {
-		if len(row) != cols {
-			return fmt.Errorf("invalid matrix: inconsistent number of columns")
-		}
-		for _, cell := range row {
-			if _, err := strconv.Atoi(cell); err != nil {
-				return fmt.Errorf("invalid matrix: all values must be integers")
-			}
-		}
-	}
-
-	// Ensure it's a square matrix
-	if rows != cols {
-		return fmt.Errorf("invalid matrix: must be a square matrix (NxN)")
-	}
-
-	return nil
+	fmt.Fprintln(w, matrixOutput(records))
 }
 
-// Transpose: Return the matrix as a string in matrix format where the columns and
-func transpose(w http.ResponseWriter, records [][]string) {
-	rows := len(records)
-	cols := len(records[0])
-	transposed := make([][]string, cols)
-
-	for i := range transposed {
-		transposed[i] = make([]string, rows)
+// 2. Invert - Return the matrix as a string in matrix format where the columns and rows are inverted
+func handleInvert(w http.ResponseWriter, r *http.Request) {
+	records, err := parseCSV(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
 
-	for i := 0; i < rows; i++ {
-		for j := 0; j < cols; j++ {
-			transposed[j][i] = records[i][j]
-		}
-	}
-
-	matrixOutput(w, transposed)
+	fmt.Fprintln(w, matrixOutput(transpose(records)))
 }
 
-// Flatten: Return the matrix as a 1 line string, with values separated by commas.
-func flatten(w http.ResponseWriter, records [][]string) []string {
-	var list []string
-	for _, row := range records {
-		list = append(list, row...)
+// 3. Flatten - Return the matrix as a 1 line string, with values separated by commas.
+func handleFlatten(w http.ResponseWriter, r *http.Request) {
+	records, err := parseCSV(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
-	fmt.Fprintln(w, strings.Join(list, ","))
-	return list
+
+	fmt.Fprintln(w, strings.Join(flatten(records), ","))
 }
 
-// Sum: Return the sum of the integers in the matrix
-func sum(w http.ResponseWriter, numbers []string) {
-	sum := 0
-	for i := 0; i < len(numbers); i++ {
-		convertNumbers, _ := strconv.Atoi(numbers[i])
-		sum += convertNumbers
+// 4. Sum - Return the sum of the integers in the matrix
+func handleSum(w http.ResponseWriter, r *http.Request) {
+	records, err := parseCSV(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
-	fmt.Fprintln(w, sum)
+
+	fmt.Fprintln(w, sum(flatten(records)))
 }
 
-// Multiply: Return the product of the integers in the matrix
-func multiply(w http.ResponseWriter, numbers []string) {
-	multiply := 1
-	for i := 0; i < len(numbers); i++ {
-		convertedNumbers, _ := strconv.Atoi(numbers[i])
-		multiply *= convertedNumbers
+// 5. Multiply - Return the product of the integers in the matrix
+func handleMultiply(w http.ResponseWriter, r *http.Request) {
+	records, err := parseCSV(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
-	fmt.Fprintln(w, multiply)
+
+	fmt.Fprintln(w, multiply(flatten(records)))
 }
 
-func matrixOutput(w http.ResponseWriter, records [][]string) {
-	var response string
-	for _, row := range records {
-		response = fmt.Sprintf("%s%s\n", response, strings.Join(row, ","))
+// Common function to parse the CSV file
+func parseCSV(r *http.Request) ([][]string, error) {
+	file, _, err := r.FormFile("file")
+	if err != nil {
+		return nil, fmt.Errorf("error to read file: %s", err)
 	}
-	fmt.Fprintln(w, response)
+	defer file.Close()
+	records, err := csv.NewReader(file).ReadAll()
+	if err != nil {
+		return nil, fmt.Errorf("error to parse file: %s", err)
+	}
+
+	// Validate matrix
+	if err := validateMatrix(records); err != nil {
+		return nil, err
+	}
+
+	return records, nil
 }

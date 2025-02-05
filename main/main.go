@@ -63,7 +63,7 @@ func handleFlatten(w http.ResponseWriter, r *http.Request) {
 
 	response := strings.Join(flatten(records), ",")
 
-	fmt.Fprint(w, response)
+	fmt.Fprintln(w, response)
 }
 
 // 4. Sum - Return the sum of the integers in the matrix
@@ -74,7 +74,7 @@ func handleSum(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Fprint(w, sum(flatten(records)))
+	fmt.Fprintln(w, sum(flatten(records)))
 }
 
 // 5. Multiply - Return the product of the integers in the matrix
@@ -86,7 +86,7 @@ func handleMultiply(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response := multiply(flatten(records))
-	fmt.Fprint(w, response)
+	fmt.Fprintln(w, response)
 }
 
 // Common function to parse the CSV file

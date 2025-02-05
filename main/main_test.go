@@ -40,7 +40,7 @@ func Test_HandleInvert(t *testing.T) {
 // Test flatten endpoint
 func Test_HandleFlatten(t *testing.T) {
 	matrix := "1,2,3\n4,5,6\n7,8,9"
-	expected := "1,2,3,4,5,6,7,8,9"
+	expected := "1,2,3,4,5,6,7,8,9\n"
 
 	w, req := createUploadRequest(t, "/flatten", matrix)
 	handleFlatten(w, req)
@@ -52,7 +52,7 @@ func Test_HandleFlatten(t *testing.T) {
 // Test sum endpoint
 func Test_HandleSum(t *testing.T) {
 	matrix := "1,2,3\n4,5,6\n7,8,9"
-	expected := "45"
+	expected := "45\n"
 
 	w, req := createUploadRequest(t, "/sum", matrix)
 	handleSum(w, req)
@@ -64,7 +64,7 @@ func Test_HandleSum(t *testing.T) {
 // Test multiply endpoint
 func Test_HandleMultiply(t *testing.T) {
 	matrix := "1,2,3\n4,5,6\n7,8,9"
-	expected := "362880"
+	expected := "362880\n"
 
 	w, req := createUploadRequest(t, "/multiply", matrix)
 	handleMultiply(w, req)

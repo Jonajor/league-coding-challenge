@@ -104,3 +104,23 @@ func Test_multiply(t *testing.T) {
 
 	assert.Equal(t, expected, result, "Should be the same.")
 }
+
+func Test_matrixOutput(t *testing.T) {
+	type args struct {
+		records [][]string
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := matrixOutput(tt.args.records); got != tt.want {
+				t.Errorf("matrixOutput() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

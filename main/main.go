@@ -39,7 +39,7 @@ func handleEcho(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Fprintln(w, matrixOutput(records))
+	fmt.Fprint(w, matrixOutput(records))
 }
 
 // 2. Invert - Return the matrix as a string in matrix format where the columns and rows are inverted
@@ -50,7 +50,7 @@ func handleInvert(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Fprintln(w, matrixOutput(transpose(records)))
+	fmt.Fprint(w, matrixOutput(transpose(records)))
 }
 
 // 3. Flatten - Return the matrix as a 1 line string, with values separated by commas.
@@ -61,7 +61,9 @@ func handleFlatten(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Fprintln(w, strings.Join(flatten(records), ","))
+	response := strings.Join(flatten(records), ",")
+
+	fmt.Fprint(w, response)
 }
 
 // 4. Sum - Return the sum of the integers in the matrix
@@ -72,7 +74,7 @@ func handleSum(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Fprintln(w, sum(flatten(records)))
+	fmt.Fprint(w, sum(flatten(records)))
 }
 
 // 5. Multiply - Return the product of the integers in the matrix
@@ -83,7 +85,8 @@ func handleMultiply(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Fprintln(w, multiply(flatten(records)))
+	response := multiply(flatten(records))
+	fmt.Fprint(w, response)
 }
 
 // Common function to parse the CSV file
